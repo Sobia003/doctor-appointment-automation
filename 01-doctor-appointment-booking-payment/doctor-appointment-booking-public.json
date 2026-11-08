@@ -1,0 +1,523 @@
+{
+  "name": "Doctor Appointment - Booking and Payment",
+  "nodes": [
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "f0b4d533-410e-41ad-b3dd-424c766bd4cc",
+              "leftValue": "={{ $json.patient_name }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            },
+            {
+              "id": "29174577-e622-4ee0-9cef-f89304f88b8d",
+              "leftValue": "={{ $json.patient_email }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            },
+            {
+              "id": "108db7a5-b115-4ef3-b0db-97fda9998b1b",
+              "leftValue": "={{ $json.appointment_date }}",
+              "rightValue": "",
+              "operator": {
+                "type": "dateTime",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            },
+            {
+              "id": "b3a4b72c-e3b1-47c1-9dfe-7204d36a0543",
+              "leftValue": "={{ $json.appointment_time }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            },
+            {
+              "id": "f18ffae2-c1fa-4bf4-96eb-98d053bfff3e",
+              "leftValue": "",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        224,
+        0
+      ],
+      "id": "52569e9c-77e8-4096-8866-df6ccbff972c",
+      "name": "Validation"
+    },
+    {
+      "parameters": {
+        "formTitle": "Doctor Appointment Booking",
+        "formDescription": "Please complete this form to request a doctor appointment. Your appointment will be confirmed after payment is verified.",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "Patient Name",
+              "fieldName": "patient_name",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Patient Email",
+              "fieldType": "email",
+              "fieldName": "patient_email",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Appointment Date",
+              "fieldType": "date",
+              "fieldName": "appointment_date",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Appointment Time",
+              "fieldType": "dropdown",
+              "fieldName": "appointment_time",
+              "fieldOptions": {
+                "values": [
+                  {
+                    "option": "10:00 AM"
+                  },
+                  {
+                    "option": "10:30 AM"
+                  },
+                  {
+                    "option": "11:00 AM"
+                  },
+                  {
+                    "option": "11:30 AM"
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        "responseMode": "lastNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.6,
+      "position": [
+        0,
+        0
+      ],
+      "id": "da84beb8-99c7-440b-997b-51e092c71527",
+      "name": "Form Submission"
+    },
+    {
+      "parameters": {
+        "authentication": "serviceAccount",
+        "documentId": {
+          "__rl": true,
+          "value": "YOUR_GOOGLE_SHEET_ID",
+          "mode": "id",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1iQmQFiSReEwqSV6J61kXVQLKDe_E5LACWlIeDHxL1T8/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "appointment_date",
+              "lookupValue": "={{ $('Form Submission').item.json.appointment_date }}"
+            },
+            {
+              "lookupColumn": "appointment_time",
+              "lookupValue": "={{ $('Form Submission').item.json.appointment_time }}"
+            }
+          ]
+        },
+        "options": {
+          "returnFirstMatch": false
+        }
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        448,
+        0
+      ],
+      "id": "1e42282c-be58-4726-907f-75eaa7fec9e7",
+      "name": "Filter Duplicates",
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "authentication": "serviceAccount",
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "YOUR_GOOGLE_SHEET_ID",
+          "mode": "id",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1iQmQFiSReEwqSV6J61kXVQLKDe_E5LACWlIeDHxL1T8/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "booking_id": "={{ $execution.id }}",
+            "patient_name": "={{ $('Form Submission').item.json.patient_name }}",
+            "patient_email": "={{ $('Form Submission').item.json.patient_email }}",
+            "appointment_date": "={{ $('Form Submission').item.json.appointment_date }}",
+            "appointment_time": "={{ $('Form Submission').item.json.appointment_time }}",
+            "status": "Pending Payment"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "booking_id",
+              "displayName": "booking_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "patient_name",
+              "displayName": "patient_name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "patient_email",
+              "displayName": "patient_email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "appointment_date",
+              "displayName": "appointment_date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "appointment_time",
+              "displayName": "appointment_time",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "status",
+              "displayName": "status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        880,
+        240
+      ],
+      "id": "66c2f389-328f-46fd-ab34-76157a712260",
+      "name": "Add in Sheet"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "8ceafae0-0dd3-43ff-822b-21e9ee7a6bd7",
+              "leftValue": "={{ $json.appointment_date }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        672,
+        0
+      ],
+      "id": "49b69235-52e9-41a1-a6c1-cbffc3139a3a",
+      "name": "Check Availability"
+    },
+    {
+      "parameters": {
+        "operation": "completion",
+        "completionTitle": "Appointment Slot Unavailable",
+        "completionMessage": "Sorry, this slot is already booked. Please submit the appointment form again and choose another date or time.",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.form",
+      "typeVersion": 2.5,
+      "position": [
+        912,
+        -128
+      ],
+      "id": "07efe42f-eaab-455e-8055-dd06f43b2782",
+      "name": "Slot Unavailable"
+    },
+    {
+      "parameters": {
+        "operation": "completion",
+        "respondWith": "redirect",
+        "redirectUrl": "={{ $json.url }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.form",
+      "typeVersion": 2.5,
+      "position": [
+        1296,
+        -208
+      ],
+      "id": "d0262864-24dd-43ae-958a-92e49a5995ec",
+      "name": "Show Payment Link"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.stripe.com/v1/checkout/sessions",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer YOUR_STRIPE_SECRET_KEY"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/x-www-form-urlencoded"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "form-urlencoded",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "mode",
+              "value": "payment"
+            },
+            {
+              "name": "success_url",
+              "value": "https://example.com/success?session_id={CHECKOUT_SESSION_ID}"
+            },
+            {
+              "name": "cancel_url",
+              "value": "https://example.com/cancel"
+            },
+            {
+              "name": "customer_email",
+              "value": "={{ $json.patient_email }}"
+            },
+            {
+              "name": "metadata[booking_id]",
+              "value": "={{ $json.booking_id }}"
+            },
+            {
+              "name": "line_items[0][price_data][currency]",
+              "value": "usd"
+            },
+            {
+              "name": "line_items[0][price_data][unit_amount]",
+              "value": "1000"
+            },
+            {
+              "name": "line_items[0][price_data][product_data][name]",
+              "value": "Doctor Appointment"
+            },
+            {
+              "name": "line_items[0][quantity]",
+              "value": "1"
+            },
+            {
+              "name": "client_reference_id",
+              "value": "={{ $json.booking_id }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        1088,
+        240
+      ],
+      "id": "4d75f3e3-ce00-450e-8d0c-9e2645810fb4",
+      "name": "Create Stripe Checkout Session"
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $('Form Submission').item.json.patient_email }}",
+        "subject": "Your Doctor Appointment Booking – Payment Required",
+        "message": "=<p>Hello {{ $('Form Submission').item.json.patient_name }},</p>\n\n<p>Thank you for booking an appointment with us!</p>\n\n<p>Here are your appointment details:</p>\n\n<p><strong>Appointment Date:</strong> {{ $('Form Submission').item.json.appointment_date }}<br>\n<strong>Appointment Time:</strong> {{ $('Form Submission').item.json.appointment_time }}<br>\n<strong>Payment Status:</strong> Pending Payment</p>\n\n<p>Please complete your payment using the link below:</p>\n\n<p><a href=\"{{ $('Create Stripe Checkout Session').item.json.url }}\">Click here to pay securely</a></p>\n\n<p>Your appointment will be confirmed once your payment has been successfully verified.</p>\n\n<p>Thank you!</p>",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        1328,
+        240
+      ],
+      "id": "e8505051-3f65-4a22-b3e6-86cd0d80aa36",
+      "name": "Send a message"
+    }
+  ],
+  "connections": {
+    "Validation": {
+      "main": [
+        [
+          {
+            "node": "Filter Duplicates",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Form Submission": {
+      "main": [
+        [
+          {
+            "node": "Validation",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter Duplicates": {
+      "main": [
+        [
+          {
+            "node": "Check Availability",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Availability": {
+      "main": [
+        [
+          {
+            "node": "Slot Unavailable",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Add in Sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Add in Sheet": {
+      "main": [
+        [
+          {
+            "node": "Create Stripe Checkout Session",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Stripe Checkout Session": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Show Payment Link": {
+      "main": [
+        []
+      ]
+    },
+    "Send a message": {
+      "main": [
+        []
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "tags": []
+}
